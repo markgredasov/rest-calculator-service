@@ -64,7 +64,7 @@ STATUS: 400 Bad Request
 ```
 {
     "numbers": [1, 2, 3],
-    "operation": "avg",
+    "operation": "average",
     "params": {
         "power": 3
     }
