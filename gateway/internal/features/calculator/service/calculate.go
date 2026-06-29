@@ -21,26 +21,31 @@ func (s *CalculatorService) Calculate(
 	ctx context.Context,
 	calculatorRequest domain.CalculatorRequest,
 ) (domain.CalculatorRequest, error) {
+	// Валидация входящих данных (проверка, пустой ли массив; верная ли операция)
 	if err := calculatorRequest.Validate(); err != nil {
 		return domain.CalculatorRequest{},
 			fmt.Errorf("failed to validate calculator request: %w", core_errors.ErrInvalidArgument)
 	}
 
+	// Преобразование запроса-структуры в JSON
 	jsonData, err := calculatorRequestToJSONRequest(calculatorRequest)
 	if err != nil {
 		return domain.CalculatorRequest{},
 			fmt.Errorf("failed to marshall request: %w", err)
 	}
 
+	// Получение URL из .env-переменных для запроса во внешний сервис
 	url, err := getCamputingCoreURL()
 	if err != nil {
 		return domain.CalculatorRequest{},
 			fmt.Errorf("failed to get computing core URL: %w", err)
 	}
 
+	// Создание контекста с тайм-аутом для похода во внешний сервис
 	ctxForRequest, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
+	// Создание запроса
 	req, err := http.NewRequestWithContext(ctxForRequest, http.MethodPost, url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return domain.CalculatorRequest{},
@@ -48,8 +53,10 @@ func (s *CalculatorService) Calculate(
 	}
 	req.Header.Set("Content-Type", "application/json")
 
+	// Создание клиента для запроса
 	client := &http.Client{}
 
+	// Выполнение запроса
 	resp, err := client.Do(req)
 	if err != nil {
 		return domain.CalculatorRequest{},
@@ -57,6 +64,7 @@ func (s *CalculatorService) Calculate(
 	}
 	defer resp.Body.Close()
 
+	// Проверка Status Code
 	if resp.StatusCode != http.StatusOK {
 		return domain.CalculatorRequest{},
 			fmt.Errorf("computing service returned error: %w: %w", err, core_errors.ErrBadGateway)
@@ -64,11 +72,13 @@ func (s *CalculatorService) Calculate(
 
 	var resultResponse computingCoreResponse
 
+	// Преобразование JSON-ответа в структуру
 	if err := json.NewDecoder(resp.Body).Decode(&resultResponse); err != nil {
 		return domain.CalculatorRequest{},
 			fmt.Errorf("failed to decode response: %w", err)
 	}
 
+	// Формирование полной ответной структуры
 	calculatorResponse := domain.CalculatorRequest{
 		Status:             domain.StatusSuccess,
 		OriginalNumbers:    calculatorRequest.OriginalNumbers,
