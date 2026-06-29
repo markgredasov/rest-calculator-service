@@ -1,5 +1,0 @@
-2026-06-29T09:29:23.497997	DEBUG	calculator-requests-receiver/main.go:29	starting calculator-requests-reciever service
-2026-06-29T09:29:23.511084	DEBUG	calculator-requests-receiver/main.go:32	initializing HTTP server
-2026-06-29T09:29:23.511084	WARN	server/server.go:64	HTTP server started	{"address": ":8080"}
-2026-06-29T09:29:29.400734	WARN	server/server.go:80	shutdown HTTP server
-2026-06-29T09:29:29.401289	WARN	server/server.go:93	HTTP server stopped
