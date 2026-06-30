@@ -2,12 +2,12 @@ services:
   computing-core:
     build: 
       context: ${PROJECT_ROOT}/computing-core
-      dockerfile: /cmd/app/Dockerfile
+      dockerfile: ./cmd/app/Dockerfile
     container_name: computing-core-app
     env_file:
       - ${PROJECT_ROOT}/computing-core/.env
     environment:
-      - LOGGER_FOLDER=${PROJECT_ROOT}/computing-core/out/logs
+      - LOGGER_FOLDER=/app/out/logs
     volumes:
       - ${PROJECT_ROOT}/computing-core/out/logs:/app/out/logs
     ports:
@@ -16,12 +16,12 @@ services:
   gateway:
     build: 
       context: ${PROJECT_ROOT}/gateway
-      dockerfile: /cmd/app/Dockerfile
+      dockerfile: ./cmd/app/Dockerfile
     container_name: gateway-app
     env_file:
       - ${PROJECT_ROOT}/gateway/.env
     environment:
-      - LOGGER_FOLDER=${PROJECT_ROOT}/gateway/out/logs
+      - LOGGER_FOLDER=/app/out/logs
     volumes:
       - ${PROJECT_ROOT}/gateway/out/logs:/app/out/logs
     ports:
