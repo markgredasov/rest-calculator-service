@@ -34,24 +34,37 @@ func (h *CalculatorHTTPHandler) Calculate(w http.ResponseWriter, r *http.Request
 
 	log.Debug("processing calculator handler")
 	var request CalculateDTORequest
+
+	// Выполнение валидации на транспортном уровне
 	if err := core_http_request.DecodeAndValidate(r, &request); err != nil {
 		log.Debug("failed to decode and validate request", zap.Error(err))
 		responseHandler.ErrorResponse(err, "failed to decode and validate request")
 		return
 	}
 
-	log.Debug("request", zap.Any("request", request))
-
+	// Приведение запроса к доменной структуре
 	domainRequest := calculateDTOToDomain(request)
 
-	calculatorRequest, err := h.calculatorService.Calculate(ctx, domainRequest)
+	// Валидация на сервисном уровне
+	serviceResp, err := h.calculatorService.Calculate(ctx, domainRequest)
 	if err != nil {
 		log.Debug("failed to calculate result", zap.Any("domain_request", domainRequest))
-		responseHandler.ErrorResponse(err, "failed to calculate result")
+		responseHandler.ErrorResponse(err, "failed to validate result in service layer")
 		return
 	}
 
-	response := calculateDomainToDTO(calculatorRequest)
+	// Выполнение запроса к сервису-калькулятору
+	result, err := h.computingCoreClient.Calculate(ctx, serviceResp.TransformedNumbers, string(serviceResp.Operation))
+	if err != nil {
+		log.Error("failed to get result from computing service", zap.Any("domain_request", domainRequest))
+		responseHandler.ErrorResponse(err, "failed to get result from computing core")
+		return
+	}
+
+	// Приведение доменной сущности к структуре ответа
+	response := calculateDomainToDTO(serviceResp, result)
+
+	// Отправка ответа
 	responseHandler.JSONReponse(response, http.StatusOK)
 }
 
@@ -69,11 +82,11 @@ func calculateDTOToDomain(dto CalculateDTORequest) domain.CalculatorRequest {
 	)
 }
 
-func calculateDomainToDTO(calcDomain domain.CalculatorRequest) CalculateDTOResponse {
+func calculateDomainToDTO(calcDomain domain.CalculatorRequest, result float64) CalculateDTOResponse {
 	return CalculateDTOResponse{
-		Status:             string(calcDomain.Status),
+		Status:             string(domain.StatusSuccess),
 		OriginalNumbers:    calcDomain.OriginalNumbers,
 		TransformedNumbers: calcDomain.TransformedNumbers,
-		AggregatedResult:   calcDomain.AggregatedResult,
+		AggregatedResult:   result,
 	}
 }

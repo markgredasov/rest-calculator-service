@@ -13,7 +13,7 @@ type CalculatorHTTPHandler struct {
 }
 
 type CalculatorService interface {
-	Process(ctx context.Context, process domain.Process) (domain.Process, error)
+	ProcessComputations(ctx context.Context, process domain.Expression) (domain.Expression, error)
 }
 
 func NewCalculatorHTTPHandler(service CalculatorService) *CalculatorHTTPHandler {
@@ -27,7 +27,7 @@ func (h *CalculatorHTTPHandler) Routes() []core_http_server.Route {
 		{
 			Method:  http.MethodPost,
 			Path:    "/process",
-			Handler: h.Process,
+			Handler: h.ProcessComputations,
 		},
 	}
 }

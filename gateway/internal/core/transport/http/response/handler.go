@@ -37,43 +37,46 @@ func (h *HTTPResponseHandler) ErrorResponse(err error, msg string) {
 		logFunc    func(string, ...zap.Field)
 	)
 
+	var respErr error
+
 	switch {
 	case errors.Is(err, core_errors.ErrNotFound):
-		err = core_errors.ErrNotFound
+		respErr = core_errors.ErrNotFound
 		statusCode = http.StatusNotFound
 		logFunc = h.log.Debug
 	case errors.Is(err, core_errors.ErrConflict):
-		err = core_errors.ErrConflict
+		respErr = core_errors.ErrConflict
 		statusCode = http.StatusConflict
 		logFunc = h.log.Warn
 	case errors.Is(err, core_errors.ErrInvalidArgument):
-		err = core_errors.ErrInvalidArgument
+		respErr = core_errors.ErrInvalidArgument
 		statusCode = http.StatusBadRequest
 		logFunc = h.log.Warn
 	case errors.Is(err, core_errors.ErrUnauthorized):
-		err = core_errors.ErrUnauthorized
+		respErr = core_errors.ErrUnauthorized
 		statusCode = http.StatusUnauthorized
 		logFunc = h.log.Debug
 	case errors.Is(err, core_errors.ErrNoRights):
-		err = core_errors.ErrNoRights
+		respErr = core_errors.ErrNoRights
 		statusCode = http.StatusForbidden
 		logFunc = h.log.Debug
 	case errors.Is(err, core_errors.ErrBadGateway):
-		err = core_errors.ErrBadGateway
+		respErr = core_errors.ErrBadGateway
 		statusCode = http.StatusBadGateway
 		logFunc = h.log.Error
 	case errors.Is(err, core_errors.ErrServiceUnavailable):
-		err = core_errors.ErrServiceUnavailable
+		respErr = core_errors.ErrServiceUnavailable
 		statusCode = http.StatusServiceUnavailable
 		logFunc = h.log.Error
 	default:
+		respErr = core_errors.ErrInternalServerError
 		statusCode = http.StatusInternalServerError
 		logFunc = h.log.Error
 	}
 
 	logFunc(msg, zap.Error(err))
 
-	h.errorResponse(statusCode, err, msg)
+	h.errorResponse(statusCode, respErr, msg)
 }
 
 func (h *HTTPResponseHandler) PanicResponse(p any, msg string) {

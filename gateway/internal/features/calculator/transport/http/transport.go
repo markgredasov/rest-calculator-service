@@ -9,16 +9,22 @@ import (
 )
 
 type CalculatorHTTPHandler struct {
-	calculatorService CalculatorService
+	calculatorService   CalculatorService
+	computingCoreClient ComputingCoreClient
 }
 
 type CalculatorService interface {
 	Calculate(ctx context.Context, calculatorRequest domain.CalculatorRequest) (domain.CalculatorRequest, error)
 }
 
-func NewCalculatorHTTPHandler(service CalculatorService) *CalculatorHTTPHandler {
+type ComputingCoreClient interface {
+	Calculate(ctx context.Context, numbers []int, operation string) (float64, error)
+}
+
+func NewCalculatorHTTPHandler(service CalculatorService, client ComputingCoreClient) *CalculatorHTTPHandler {
 	return &CalculatorHTTPHandler{
-		calculatorService: service,
+		calculatorService:   service,
+		computingCoreClient: client,
 	}
 }
 

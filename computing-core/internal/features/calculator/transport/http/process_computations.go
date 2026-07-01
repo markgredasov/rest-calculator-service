@@ -10,49 +10,49 @@ import (
 	"go.uber.org/zap"
 )
 
-type ProcessDTORequest struct {
+type ProcessComputationDTORequest struct {
 	Numbers   []int  `json:"numbers" validate:"required,min=1,gte=0"`
 	Operation string `json:"operation" validate:"required,oneof=sum multiply average"`
 }
 
-type ProcessDTOResponse struct {
+type ProcessComputationDTOResponse struct {
 	Result float64 `json:"result"`
 }
 
-func (h *CalculatorHTTPHandler) Process(w http.ResponseWriter, r *http.Request) {
+func (h *CalculatorHTTPHandler) ProcessComputations(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
 	responseHandler := core_http_response.NewHTTPResponseHandler(log, w)
 
-	log.Debug("processing process handler")
-	var request ProcessDTORequest
+	log.Debug("processing process computations handler")
+	var request ProcessComputationDTORequest
 	if err := core_http_request.DecodeAndValidate(r, &request); err != nil {
 		log.Debug("failed to decode and validate request", zap.Error(err))
 		responseHandler.ErrorResponse(err, "failed to decode and validate request")
 		return
 	}
 
-	processDomain := processDTOToDomain(request)
-	process, err := h.calculatorService.Process(ctx, processDomain)
+	processDomain := processComputationDTOToDomain(request)
+	process, err := h.calculatorService.ProcessComputations(ctx, processDomain)
 	if err != nil {
 		log.Debug("failed to process operation", zap.Any("process_domain", processDomain))
 		responseHandler.ErrorResponse(err, "failed to process operation")
 		return
 	}
 
-	response := processDomainToDTO(process)
+	response := processComputationDomainToDTO(process)
 	responseHandler.JSONReponse(response, http.StatusOK)
 }
 
-func processDTOToDomain(req ProcessDTORequest) domain.Process {
-	return domain.NewProcessUnitialized(
+func processComputationDTOToDomain(req ProcessComputationDTORequest) domain.Expression {
+	return domain.NewExpressionUnitialized(
 		req.Numbers,
 		req.Operation,
 	)
 }
 
-func processDomainToDTO(domainProcess domain.Process) ProcessDTOResponse {
-	return ProcessDTOResponse{
-		Result: domainProcess.Result,
+func processComputationDomainToDTO(domainExpression domain.Expression) ProcessComputationDTOResponse {
+	return ProcessComputationDTOResponse{
+		Result: domainExpression.Result,
 	}
 }
