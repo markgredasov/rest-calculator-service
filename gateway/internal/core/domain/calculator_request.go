@@ -46,6 +46,18 @@ func NewCalculatorRequestUnitialized(nums []int, operation string, power int) Ca
 	}
 }
 
+func NewCalculatorRequest(status Status, originalNumbers []int, transformedNumbers []int,
+	aggregatedResult float64, operation Operation, power int) CalculatorRequest {
+	return CalculatorRequest{
+		Status:             status,
+		OriginalNumbers:    originalNumbers,
+		TransformedNumbers: transformedNumbers,
+		AggregatedResult:   aggregatedResult,
+		Operation:          operation,
+		Power:              power,
+	}
+}
+
 func (c *CalculatorRequest) Validate() error {
 	if len(c.OriginalNumbers) == 0 {
 		return fmt.Errorf("empty original numbers array: %d", len(c.OriginalNumbers))

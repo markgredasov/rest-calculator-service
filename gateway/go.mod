@@ -4,11 +4,10 @@ go 1.26.3
 
 require (
 	github.com/go-playground/validator/v10 v10.30.3
-	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/sony/gobreaker v1.0.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/crypto v0.53.0
 )
 
 require (
@@ -17,6 +16,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
 )

@@ -9,6 +9,12 @@ export PROJECT_ROOT=$(pwd) && \
 docker compose up --build
 ```
 
+или
+
+```
+make deploy-up
+```
+
 ## Примеры запросов
 
 С примерами запросов можно ознакомиться [здесь](/example-requests.md).
@@ -41,13 +47,16 @@ docker compose up --build
 │   │       ├───http
 │   │       ├───jwt
 │   │       └───time
-│   └───out                              # директория с логами
-│       └───logs
+│   └───out                              
+│       └───logs                         # директория с логами
 └───gateway                              # шлюз-агрегатор
     ├───cmd
     │   └───app                          # точка входа в приложение
     ├───internal
-    │   ├───core                         # общие компоненты
+    │   ├───clients                      # клиенты
+    │   │   └───computing_core           # клиент в computing-core
+    │   │       └───models
+    │   ├───core
     │   │   ├───domain
     │   │   ├───errors
     │   │   ├───logger                   # конфигурация и инициализация логгера
@@ -64,10 +73,8 @@ docker compose up --build
     │   │       └───transport            # обработчики HTTP-эндпоинтов шлюза-агрегатора
     │   │           └───http
     │   └───utils                        # вспомогательные утилиты
-    │       ├───hash
-    │       ├───http
-    │       ├───jwt
-    │       └───time
+    │       ├───env                      # утилита для работы с .env
+    │       └───http
     └───out
         └───logs                         # директория с логами
 ```

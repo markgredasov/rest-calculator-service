@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	clients_computing_core "github.com/markgredasov/rest-calculator-service/internal/clients/computing_core"
 	core_logger "github.com/markgredasov/rest-calculator-service/internal/core/logger"
 	core_http_middleware "github.com/markgredasov/rest-calculator-service/internal/core/transport/http/middleware"
 	core_http_server "github.com/markgredasov/rest-calculator-service/internal/core/transport/http/server"
@@ -31,9 +33,12 @@ func main() {
 	logger.Debug("starting calculator-requests-reciever service")
 	defer logger.Close()
 
+	logger.Debug("initializing computer core client")
+	computingCoreClient := clients_computing_core.NewClient(3 * time.Second)
+
 	logger.Debug("initializing feature calculator")
 	calculatorService := calculator_service.NewCalculatorService(nil)
-	calculatorHTTPHandler := calculator_transport.NewCalculatorHTTPHandler(&calculatorService)
+	calculatorHTTPHandler := calculator_transport.NewCalculatorHTTPHandler(&calculatorService, computingCoreClient)
 
 	logger.Debug("initializing HTTP server")
 	apiVersion1Router := core_http_server.NewApiVersionRouter(core_http_server.ApiVersion1)

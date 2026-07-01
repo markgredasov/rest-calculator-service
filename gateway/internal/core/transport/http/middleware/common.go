@@ -2,22 +2,16 @@ package core_http_middleware
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	core_errors "github.com/markgredasov/rest-calculator-service/internal/core/errors"
 	core_logger "github.com/markgredasov/rest-calculator-service/internal/core/logger"
 	core_http_response "github.com/markgredasov/rest-calculator-service/internal/core/transport/http/response"
-	utils_jwt "github.com/markgredasov/rest-calculator-service/internal/utils/jwt"
 	"go.uber.org/zap"
 )
 
-// добавить Trace-ID, общий для всех микросервисов для одного процесса
-// почитать о принципе Trace-ID
-// прочитать про circuit breaker
 func RequestID() Middleware {
 	return func(next http.Handler) http.Handler {
 		const RequestIDHeader = "x-request-id"
@@ -27,10 +21,12 @@ func RequestID() Middleware {
 				requestID = uuid.NewString()
 			}
 
+			ctx := context.WithValue(r.Context(), RequestIDHeader, requestID)
+
 			r.Header.Set(RequestIDHeader, requestID)
 			w.Header().Set(RequestIDHeader, requestID)
 
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
@@ -47,7 +43,8 @@ func Logger(l *core_logger.Logger) Middleware {
 				zap.String("URL", r.URL.String()),
 			)
 
-			ctx := context.WithValue(r.Context(), "logger", logger)
+			ctx := r.Context()
+			ctx = context.WithValue(r.Context(), "logger", logger)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -108,56 +105,11 @@ func Trace() Middleware {
 	}
 }
 
-func Auth() Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			logger := core_logger.FromContext(ctx)
-			responseHandler := core_http_response.NewHTTPResponseHandler(logger, w)
-
-			tokenString := strings.Replace(r.Header.Get("Authorization"), "Bearer ", "", 1)
-
-			claims, err := utils_jwt.ExtractJWTClaims(tokenString)
-			if err != nil {
-				err = fmt.Errorf("failed getting claims: %w: %w", err, core_errors.ErrUnauthorized)
-				responseHandler.ErrorResponse(
-					err,
-					"unauthorized",
-				)
-				return
-			}
-
-			r.Header.Set("user_id", claims.UserID)
-			r.Header.Set("role", claims.Role)
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-func RoleRights(checkRole string) Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			logger := core_logger.FromContext(ctx)
-			responseHandler := core_http_response.NewHTTPResponseHandler(logger, w)
-
-			role := r.Header.Get("role")
-			if role != checkRole {
-				err := fmt.Errorf("%s rights required: %w", checkRole, core_errors.ErrNoRights)
-				responseHandler.ErrorResponse(err, fmt.Sprintf("%s rights required", checkRole))
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
 func CORS() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			allowedOrigins := map[string]struct{}{
-				"http://localhost:8080": {},
+				"http://localhost:8000": {},
 			}
 
 			origin := r.Header.Get("Origin")
