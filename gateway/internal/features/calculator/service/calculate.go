@@ -17,12 +17,11 @@ type computingCoreResponse struct {
 	Result float64 `json:"result"`
 }
 
-func (s *CalculatorService) Calculate(
-	ctx context.Context,
-	calculatorRequest domain.CalculatorRequest,
-) (domain.CalculatorRequest, error) {
+func (s *CalculatorService) Calculate(ctx context.Context,
+	calculatorRequest domain.CalculatorRequest) (domain.CalculatorRequest, error) {
 	// Валидация входящих данных (проверка, пустой ли массив; верная ли операция)
-	if err := calculatorRequest.Validate(); err != nil {
+	err := calculatorRequest.Validate()
+	if err != nil {
 		return domain.CalculatorRequest{},
 			fmt.Errorf("failed to validate calculator request: %w", core_errors.ErrInvalidArgument)
 	}
@@ -35,7 +34,7 @@ func (s *CalculatorService) Calculate(
 	}
 
 	// Получение URL из .env-переменных для запроса во внешний сервис
-	url, err := getCamputingCoreURL()
+	url, err := getComputingCoreURL()
 	if err != nil {
 		return domain.CalculatorRequest{},
 			fmt.Errorf("failed to get computing core URL: %w", err)
@@ -73,12 +72,17 @@ func (s *CalculatorService) Calculate(
 	var resultResponse computingCoreResponse
 
 	// Преобразование JSON-ответа в структуру
+
+	// Ты положил бизнес логику в одину структу с логикой отправки сообщений
+	// Нарушение принципа Once responsybility.
 	if err := json.NewDecoder(resp.Body).Decode(&resultResponse); err != nil {
 		return domain.CalculatorRequest{},
 			fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Формирование полной ответной структуры
+
+	//В отдельную структуру-маппер
 	calculatorResponse := domain.CalculatorRequest{
 		Status:             domain.StatusSuccess,
 		OriginalNumbers:    calculatorRequest.OriginalNumbers,
@@ -100,7 +104,8 @@ func calculatorRequestToJSONRequest(calculatorRequest domain.CalculatorRequest) 
 	return json.Marshal(data)
 }
 
-func getCamputingCoreURL() (string, error) {
+// вынести в отдельную структуру
+func getComputingCoreURL() (string, error) {
 	host := os.Getenv("HTTP_HOST")
 	if host == "" {
 		return "", fmt.Errorf("failed to get HTTP_HOST")

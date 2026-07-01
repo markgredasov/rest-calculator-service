@@ -15,6 +15,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// добавить Trace-ID, общий для всех микросервисов для одного процесса
+// почитать о принципе Trace-ID
+// прочитать про circuit breaker
 func RequestID() Middleware {
 	return func(next http.Handler) http.Handler {
 		const RequestIDHeader = "x-request-id"
