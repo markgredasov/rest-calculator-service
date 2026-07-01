@@ -5,3 +5,7 @@ deploy-up:
 
 deploy-down:
 	@docker compose down gateway computing-core
+
+tests:
+	@cd ./gateway && echo "testing gateway..." && go test -v ./internal/features/... && cd .. && \
+	cd ./computing-core && echo "testing computing-core..." && go test -v ./internal/features/... && cd ..

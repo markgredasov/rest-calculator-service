@@ -3,6 +3,7 @@ module github.com/markgredasov/rest-calculator-service
 go 1.26.3
 
 require (
+	github.com/go-openapi/testify/v2 v2.6.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
