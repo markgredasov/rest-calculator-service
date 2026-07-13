@@ -32,13 +32,13 @@ func NewExpressionUnitialized(nums []int, op string) Expression {
 	}
 }
 
-func (p *Expression) Validate() error {
+func (e *Expression) Validate() error {
 
-	if len(p.Numbers) == 0 {
+	if len(e.Numbers) == 0 {
 		return fmt.Errorf("empty numbers array")
 	}
 
-	switch p.Operation {
+	switch e.Operation {
 	case OperationSum, OperationMultiply, OperationAverage:
 		break
 	default:

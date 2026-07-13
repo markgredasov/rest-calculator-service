@@ -13,7 +13,7 @@ type CalculatorHTTPHandler struct {
 }
 
 type CalculatorService interface {
-	ProcessComputations(ctx context.Context, process domain.Expression) (domain.Expression, error)
+	ProcessComputations(ctx context.Context, expression domain.Expression) (domain.Expression, error)
 }
 
 func NewCalculatorHTTPHandler(service CalculatorService) *CalculatorHTTPHandler {
