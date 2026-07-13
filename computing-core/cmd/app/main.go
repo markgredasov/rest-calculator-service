@@ -7,11 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	core_logger "github.com/markgredasov/rest-calculator-service/internal/core/logger"
-	core_http_middleware "github.com/markgredasov/rest-calculator-service/internal/core/transport/http/middleware"
-	core_http_server "github.com/markgredasov/rest-calculator-service/internal/core/transport/http/server"
-	calculator_service "github.com/markgredasov/rest-calculator-service/internal/features/calculator/service"
-	calculator_transport "github.com/markgredasov/rest-calculator-service/internal/features/calculator/transport/http"
+	"github.com/markgredasov/rest-calculator-service/internal/app"
 	"go.uber.org/zap"
 )
 
@@ -22,36 +18,14 @@ func main() {
 	)
 	defer cancel()
 
-	loggerConfig := core_logger.NewConfigMust()
-	logger, err := core_logger.NewLogger(loggerConfig)
+	app, err := app.InitializeApp(ctx)
 	if err != nil {
-		fmt.Println("logger cannot be initialized:", err)
+		fmt.Printf("failed to initialize app: %w\n", err)
 		os.Exit(1)
 	}
-	logger.Debug("starting calculator service")
-	defer logger.Close()
+	defer app.Close()
 
-	logger.Debug("initializing feature calculator")
-	calculatorService := calculator_service.NewCalculatorService(nil)
-	calculatorHTTPHandler := calculator_transport.NewCalculatorHTTPHandler(&calculatorService)
-
-	logger.Debug("initializing HTTP server")
-	apiInternalRouter := core_http_server.NewApiVersionRouter(core_http_server.ApiPrefixInternal)
-	apiInternalRouter.RegisterRoutes(calculatorHTTPHandler.Routes()...)
-
-	serverConfig := core_http_server.NewConfigMust()
-	server := core_http_server.NewHTTPServer(
-		serverConfig,
-		logger,
-		core_http_middleware.CORS(),
-		core_http_middleware.RequestID(),
-		core_http_middleware.Logger(logger),
-		core_http_middleware.Recovery(),
-		core_http_middleware.Trace(),
-	)
-	server.RegisterAPIRouters(apiInternalRouter)
-
-	if err := server.Run(ctx); err != nil {
-		logger.Error("HTTP server run error", zap.Error(err))
+	if err := app.Server.Run(ctx); err != nil {
+		app.Logger.Error("HTTP server run error", zap.Error(err))
 	}
 }

@@ -24,6 +24,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	defer app.Close()
+
 	if err := app.Run(ctx); err != nil {
 		app.Logger.Error("HTTP server run error", zap.Error(err))
 	}

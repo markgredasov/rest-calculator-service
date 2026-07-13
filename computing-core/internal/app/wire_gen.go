@@ -9,13 +9,11 @@ package app
 import (
 	"context"
 	"github.com/google/wire"
-	"github.com/markgredasov/rest-calculator-service/internal/clients/computing_core"
 	"github.com/markgredasov/rest-calculator-service/internal/core/logger"
 	"github.com/markgredasov/rest-calculator-service/internal/core/transport/http/middleware"
 	"github.com/markgredasov/rest-calculator-service/internal/core/transport/http/server"
 	"github.com/markgredasov/rest-calculator-service/internal/features/calculator/service"
 	"github.com/markgredasov/rest-calculator-service/internal/features/calculator/transport/http"
-	"time"
 )
 
 // Injectors from wire.go:
@@ -28,39 +26,36 @@ func InitializeApp(ctx context.Context) (*App, error) {
 	}
 	core_http_serverConfig := core_http_server.NewConfigMust()
 	v := provideMiddlewares(logger)
-	calculatorService := provideCalculatorService()
-	client := provideComputingCoreClient()
-	calculatorHTTPHandler := calculator_transport.NewCalculatorHTTPHandler(calculatorService, client)
+	calculatorHTTPHandler := provideCalculatorHandler()
 	apiVersionRouter := provideAPIRouter(calculatorHTTPHandler)
 	httpServer := provideServer(core_http_serverConfig, logger, v, apiVersionRouter)
-	app := NewApp(logger, httpServer, client)
+	app := NewApp(logger, httpServer)
 	return app, nil
 }
 
 // wire.go:
 
-var ProviderSet = wire.NewSet(core_logger.NewConfigMust, core_logger.NewLogger, provideComputingCoreClient,
-	provideCalculatorService, wire.Bind(new(calculator_transport.ComputingCoreClient), new(*clients_computing_core.Client)), wire.Bind(new(calculator_transport.CalculatorService), new(*calculator_service.CalculatorService)), calculator_transport.NewCalculatorHTTPHandler, provideAPIRouter, core_http_server.NewConfigMust, provideMiddlewares,
+var ProviderSet = wire.NewSet(core_logger.NewConfigMust, core_logger.NewLogger, provideCalculatorHandler,
+	provideAPIRouter, core_http_server.NewConfigMust, provideMiddlewares,
 	provideServer,
 
 	NewApp,
 )
 
-func provideComputingCoreClient() *clients_computing_core.Client {
-	return clients_computing_core.NewClient(3 * time.Second)
-}
+func provideCalculatorHandler() *calculator_transport.CalculatorHTTPHandler {
+	calculatorService := calculator_service.NewCalculatorService(nil)
+	calculatorHTTPHandler := calculator_transport.NewCalculatorHTTPHandler(&calculatorService)
 
-func provideCalculatorService() *calculator_service.CalculatorService {
-	service := calculator_service.NewCalculatorService(nil)
-	return &service
+	return calculatorHTTPHandler
 }
 
 func provideAPIRouter(
-	calculatorHandler *calculator_transport.CalculatorHTTPHandler,
+	calculatorHTTPHandler *calculator_transport.CalculatorHTTPHandler,
 ) *core_http_server.APIVersionRouter {
-	router := core_http_server.NewApiVersionRouter(core_http_server.ApiVersion1)
-	router.RegisterRoutes(calculatorHandler.Routes()...)
-	return router
+	apiInternalRouter := core_http_server.NewApiVersionRouter(core_http_server.ApiPrefixInternal)
+	apiInternalRouter.RegisterRoutes(calculatorHTTPHandler.Routes()...)
+
+	return apiInternalRouter
 }
 
 func provideMiddlewares(
